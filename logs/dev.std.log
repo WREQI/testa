@@ -1,0 +1,100 @@
+[client] 
+[client] > fullstack-nestjs-template@2.2.5 dev:client
+[client] > NODE_ENV=development vite --config vite.config.ts
+[client] 
+[server] 
+[server] > fullstack-nestjs-template@2.2.5 dev:server
+[server] > NODE_ENV=development nest start --watch
+[server] 
+[client] /Users/wrqfiles/Downloads/app_17bp3bwd3qc/node_modules/rollup/dist/native.js:121
+[client] 		throw new Error(
+[client] 		      ^
+[client] 
+[client] Error: Cannot find module @rollup/rollup-darwin-arm64. npm has a bug related to optional dependencies (https://github.com/npm/cli/issues/4828). Please try `npm i` again after removing both package-lock.json and node_modules directory.
+[client]     at requireWithFriendlyError (/Users/wrqfiles/Downloads/app_17bp3bwd3qc/node_modules/rollup/dist/native.js:121:9)
+[client]     at Object.<anonymous> (/Users/wrqfiles/Downloads/app_17bp3bwd3qc/node_modules/rollup/dist/native.js:130:76)
+[client]     at Module._compile (node:internal/modules/cjs/loader:1734:14)
+[client]     at Object..js (node:internal/modules/cjs/loader:1899:10)
+[client]     at Module.load (node:internal/modules/cjs/loader:1469:32)
+[client]     at Function._load (node:internal/modules/cjs/loader:1286:12)
+[client]     at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+[client]     at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+[client]     at cjsLoader (node:internal/modules/esm/translators:315:5)
+[client]     at ModuleWrap.<anonymous> (node:internal/modules/esm/translators:207:7) {
+[client]   [cause]: Error: Cannot find module '@rollup/rollup-darwin-arm64'
+[client]   Require stack:
+[client]   - /Users/wrqfiles/Downloads/app_17bp3bwd3qc/node_modules/rollup/dist/native.js
+[client]       at Function._resolveFilename (node:internal/modules/cjs/loader:1405:15)
+[client]       at defaultResolveImpl (node:internal/modules/cjs/loader:1061:19)
+[client]       at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1066:22)
+[client]       at Function._load (node:internal/modules/cjs/loader:1215:37)
+[client]       at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+[client]       at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+[client]       at Module.require (node:internal/modules/cjs/loader:1491:12)
+[client]       at require (node:internal/modules/helpers:135:16)
+[client]       at requireWithFriendlyError (/Users/wrqfiles/Downloads/app_17bp3bwd3qc/node_modules/rollup/dist/native.js:103:10)
+[client]       at Object.<anonymous> (/Users/wrqfiles/Downloads/app_17bp3bwd3qc/node_modules/rollup/dist/native.js:130:76) {
+[client]     code: 'MODULE_NOT_FOUND',
+[client]     requireStack: [
+[client]       '/Users/wrqfiles/Downloads/app_17bp3bwd3qc/node_modules/rollup/dist/native.js'
+[client]     ]
+[client]   }
+[client] }
+[client] 
+[client] Node.js v23.11.0
+[client] npm run dev:client exited with code 1
+--> Sending SIGTERM to other processes..
+[server] npm run dev:server exited with code SIGTERM
+[server] 
+[server] > fullstack-nestjs-template@2.2.5 dev:server
+[server] > NODE_ENV=development nest start --watch
+[server] 
+[client] 
+[client] > fullstack-nestjs-template@2.2.5 dev:client
+[client] > NODE_ENV=development vite --config vite.config.ts
+[client] 
+[server] [[90m10:12:11 PM[0m] Starting compilation in watch mode...
+[server] 
+[client] [route-parser] Generated routes.json (8 routes)
+[client] [fullstack-ws-watchdog] active
+[client] [Middleware] Registered Express compatibility layer for Connect/Vite
+[client] [Middleware] Registered: dev-logs at /dev/logs
+[client]   GET /dev/logs/app/trace/:traceId - Get log entries by trace ID
+[client]   GET /dev/logs/trace/recent - Get recent trace calls with pagination and optional path/method filters
+[client]   GET /dev/logs/files/:fileName - Get paginated log file content by file name
+[client]   GET /dev/logs/server-logs - Get server logs in ServerLog format (compatible with frontend)
+[client]   GET /dev/logs/trace/trigger/list - Get trigger list (automation trigger) in trace.log
+[client]   GET /dev/logs/trace/trigger/:instanceID - Get trigger detail (automation trigger) in trace.log by instanceID
+[client]   GET /dev/logs/api-list - Get all API routes grouped by module
+[client] [Middleware] Registered: openapi at /dev
+[client]   GET /dev/openapi.json - Serve enhanced OpenAPI specification with source code references
+[client]   GET /dev/openapi/spec - Serve OpenAPI specification for /openapi/*
+[client] [Middleware] Registered: collect-logs at /dev/logs
+[client]   POST /dev/logs/collect - Collect logs from client.
+[client] [html-output] Written to: /Users/wrqfiles/Downloads/app_17bp3bwd3qc/dist/client/index.html
+[client] 10:12:11 PM [vite] (client) Forced re-optimization of dependencies
+[client] 
+[client]   VITE v7.3.6  ready in 1195 ms
+[client] 
+[client]   ➜  Local:   http://localhost:8080/
+[server] [96mserver/modules/stock/stock.service.ts[0m:[93m234[0m:[93m25[0m - [91merror[0m[90m TS2677: [0mA type predicate's type must be assignable to its parameter's type.
+[server]   Type 'HotStock' is not assignable to type '{ code: string; name: string; type: "stock"; close: number; pctChg: number; change: number; }'.
+[server]     Types of property 'type' are incompatible.
+[server]       Type '"stock" | "index"' is not assignable to type '"stock"'.
+[server]         Type '"index"' is not assignable to type '"stock"'.
+[server] 
+[server] [7m234[0m     }).filter((v): v is HotStock => v !== null);
+[server] [7m   [0m [91m                        ~~~~~~~~[0m
+[server] 
+[server] [[90m10:12:12 PM[0m] Found 1 error. Watching for file changes.
+[server] 
+[client] (node:43316) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+[client] (Use `node --trace-warnings ...` to show where the warning was created)
+[client] (node:43316) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/wrqfiles/Downloads/app_17bp3bwd3qc/tailwind.config.ts?id=1786284732750 is not specified and it doesn't parse as CommonJS.
+[client] Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+[client] To eliminate this warning, add "type": "module" to /Users/wrqfiles/Downloads/app_17bp3bwd3qc/package.json.
+[client] 
+[client] A PostCSS plugin did not pass the `from` option to `postcss.parse`. This may cause imported assets to be incorrectly transformed. If you've recently added a PostCSS plugin that raised this warning, please contact the package author to fix the issue.
+[client] [Proxy] Error: 
+[client] [Proxy] Connection error, waiting for service recovery...
+[client] [Proxy] Service did not recover within timeout, returning 502

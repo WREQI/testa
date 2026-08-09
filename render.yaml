@@ -1,0 +1,35 @@
+services:
+  - type: web
+    name: stock-app-backend
+    runtime: node
+    plan: free
+    branch: main
+    buildCommand: |
+      npm ci --include=dev
+      npm run build:server
+      npm prune --omit=dev
+    startCommand: node dist/server/main.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: LOG_DIR
+        value: /tmp/logs
+      - key: LOG_REQUEST_BODY
+        value: "true"
+      - key: LOG_RESPONSE_BODY
+        value: "true"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: stock-app-db
+          property: connectionString
+
+databases:
+  - name: stock-app-db
+    plan: free
+    databaseName: stock_app
+    user: stock_app_user
+    ipAllowList:
+      - source: 0.0.0.0/0
+        description: Allow all (for Render services)
