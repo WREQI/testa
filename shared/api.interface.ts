@@ -226,6 +226,7 @@ export interface TradeRequest {
   price: number;
   quantity: number;
   direction: 'buy' | 'sell';
+  clientOrderId?: string;
 }
 
 export interface TradeResult {

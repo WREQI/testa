@@ -11,7 +11,12 @@ import * as crypto from 'crypto';
 import { appUsers } from '@server/database/schema';
 import type { AuthUser, AuthResponse, RegisterRequest, LoginRequest } from '@shared/api.interface';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'stocklab_jwt_secret_key_dev_2024';
+const JWT_SECRET = process.env.JWT_SECRET || (process.env.NODE_ENV === 'production'
+  ? (() => { throw new Error('JWT_SECRET must be configured in production'); })()
+  : crypto.randomBytes(32).toString('hex'));
+if (JWT_SECRET.length < 32) {
+  throw new Error('JWT_SECRET must be at least 32 characters');
+}
 const SALT_LEN = 16;
 const HASH_ITERATIONS = 10000;
 const HASH_KEYLEN = 64;
@@ -82,19 +87,23 @@ export class AuthService {
     const passwordHash = hashPassword(password);
     const nickname = email.split('@')[0];
 
-    const [user] = await this.db
-      .insert(appUsers)
-      .values({
-        email,
-        passwordHash,
-        nickname,
-      })
-      .returning({
-        id: appUsers.id,
-        email: appUsers.email,
-        nickname: appUsers.nickname,
-        createdAt: appUsers.createdAt,
-      });
+    let user;
+    try {
+      [user] = await this.db
+        .insert(appUsers)
+        .values({ email, passwordHash, nickname })
+        .returning({
+          id: appUsers.id,
+          email: appUsers.email,
+          nickname: appUsers.nickname,
+          createdAt: appUsers.createdAt,
+        });
+    } catch (error) {
+      if (typeof error === 'object' && error !== null && (error as { code?: unknown }).code === '23505') {
+        throw new BadRequestException('该邮箱已被注册');
+      }
+      throw error;
+    }
 
     const token = this.signToken(user.id);
     return {
@@ -179,6 +188,8 @@ export class AuthService {
       const parts = token.split('.');
       if (parts.length !== 3) return null;
       const [header, payload, signature] = parts;
+      const headerData = JSON.parse(Buffer.from(header, 'base64url').toString('utf8'));
+      if (headerData.alg !== 'HS256' || headerData.typ !== 'JWT') return null;
       const expected = crypto
         .createHmac('sha256', JWT_SECRET)
         .update(`${header}.${payload}`)
@@ -187,8 +198,8 @@ export class AuthService {
       const expBuf = Buffer.from(expected, 'base64url');
       if (!crypto.timingSafeEqual(sigBuf, expBuf)) return null;
       const data = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
-      if (data.exp && data.exp < Math.floor(Date.now() / 1000)) return null;
-      return data.sub || null;
+      if (typeof data.sub !== 'string' || !data.sub || typeof data.exp !== 'number' || data.exp <= Math.floor(Date.now() / 1000)) return null;
+      return data.sub;
     } catch {
       return null;
     }

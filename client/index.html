@@ -9,8 +9,9 @@
   <script>
     try {
       window.__platform__ = JSON.parse('{{{__platform__}}}');
-    } catch (e) {
-      console.error('Failed to parse __platform__', e);
+    } catch {
+      // Hosted deployments replace the placeholder; standalone Vite does not.
+      window.__platform__ = {};
     }
   </script>
 </head>
