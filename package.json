@@ -33,7 +33,9 @@
     "prepare": "chmod +x .githooks/pre-commit 2>/dev/null; git config core.hooksPath .githooks 2>/dev/null || true",
     "postinstall": "command -v fullstack-cli >/dev/null 2>&1 && fullstack-cli action-plugin init || npx -y @lark-apaas/fullstack-cli@latest action-plugin init || echo '⚠️  fullstack-cli init skipped (non-critical), continuing'",
     "dev:local": "node ./scripts/dev-local.js",
-    "db:migrate": "node scripts/migrate.js"
+    "db:migrate": "node scripts/migrate.js",
+    "dev:client:standalone": "NODE_ENV=development vite --config vite.standalone.config.ts",
+    "build:client:standalone": "NODE_ENV=production vite build --config vite.standalone.config.ts"
   },
   "dependencies": {
     "@lark-apaas/fullstack-nestjs-core": "^1.1.57",

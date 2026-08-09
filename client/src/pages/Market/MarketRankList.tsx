@@ -113,7 +113,7 @@ const MarketRankList = () => {
           pageSize: 50,
         });
         if (!cancelled) {
-          setStocks(res.items);
+          setStocks(res.items ?? []);
         }
       } catch {
         if (!cancelled) setStocks([]);
