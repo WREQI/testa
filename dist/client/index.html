@@ -1,11 +1,37 @@
-<!DOCTYPE html>
-<html lang="zh">
+<!DOCTYPE html><html lang="zh"><head><script>(function(){
+  var needsPolyfill=(function(){
+    try{
+      if(typeof crypto==="undefined"||typeof crypto.randomUUID!=="function")return true;
+      if(typeof Object.hasOwn!=="function")return true;
+      if(typeof[].at!=="function")return true;
+      if(typeof[].findLast!=="function")return true;
+      return false;
+    }catch(e){return true}
+  })();
+  if(needsPolyfill){
+    document.write('<script src="/polyfills.js"><\/script>');
+  }
+})();</script><script>(function() {
+  var isModernBrowser = (function() {
+    try {
+      if (typeof CSS === 'undefined' || typeof CSS.supports !== 'function') return false;
+      if (!CSS.supports('selector(:has(*))')) return false;
+      if (!CSS.supports('color', 'color-mix(in srgb, red, blue)')) return false;
+      if (!CSS.supports('color', 'oklch(50% 0.1 0)')) return false;
+      return true;
+    } catch (e) {
+      return false;
+    }
+  })();
 
-<head>
-  <script type="module" src="/@ws-watchdog.js"></script>
+  var cssUrls = ["/assets/index-CKmxJdtv.css"];
+  var suffix = isModernBrowser ? '' : '.legacy';
 
-  <script>
-        window.csrfToken = "{{csrfToken}}";
+  cssUrls.forEach(function(url) {
+    var finalUrl = url.replace(/\.css$/, suffix + '.css');
+    document.write('<link rel="stylesheet" href="' + finalUrl + '">');
+  });
+})();</script><noscript><link rel="stylesheet" href="/assets/index-CKmxJdtv.css"></noscript><script>window.csrfToken = "{{csrfToken}}";
         window.userId = "{{userId}}";
         window.tenantId = "{{tenantId}}";
         window.appId = "{{appId}}";
@@ -18,10 +44,7 @@
         if (appInfo.name) {
           window._appInfo = appInfo;
         }
-        window.__BASENAME__ = "{{basename}}";
-    </script>
-
-  <script>(function(g){
+        window.__BASENAME__ = "{{basename}}";</script><script>(function(g){
   if(!window[g]){var q=[];window[g]=function(){q.push([].slice.call(arguments));};window[g].q=q;}
   window.__slardarErrBuf=window.__slardarErrBuf||[];
   var ref=document.referrer||'';
@@ -54,9 +77,7 @@
   window.addEventListener('unhandledrejection',function(e){
     if(e.reason!=null)_cap(e.reason instanceof Error?e.reason:new Error(String(e.reason)));
   });
-})('KSlardarWeb');</script>
-  <script>
-    const slardarScript = document.createElement('script');
+})('KSlardarWeb');</script><script>const slardarScript = document.createElement('script');
     slardarScript.src = 'https://lf3-short.ibytedapm.com/slardar/fe/sdk-web/browser.cn.js?bid=apaas_miaoda&globalName=KSlardarWeb';
     slardarScript.crossOrigin = 'anonymous';
 
@@ -90,11 +111,7 @@
     };
 
     // Add script to page
-    document.head.appendChild(slardarScript);
-  </script>
-  <script src="https://sf3-scmcdn-cn.feishucdn.com/obj/unpkg/byted/performance/0.1.2/dist/performance.iife.js" crossorigin="anonymous" defer></script>
-  <script>
-  (function (win, export_obj) {
+    document.head.appendChild(slardarScript);</script><script src="https://sf3-scmcdn-cn.feishucdn.com/obj/unpkg/byted/performance/0.1.2/dist/performance.iife.js" crossorigin="anonymous" defer="defer"></script><script>(function (win, export_obj) {
     win['LogAnalyticsObject'] = export_obj;
     if (!win[export_obj]) {
       function _collect() {
@@ -118,46 +135,8 @@
     };
 
     // Add script to page
-    document.head.appendChild(teaScript);
-  </script>
-
-  <script type="module">import { injectIntoGlobalHook } from "/@react-refresh";
-injectIntoGlobalHook(window);
-window.$RefreshReg$ = () => {};
-window.$RefreshSig$ = () => (type) => type;</script>
-
-  <script type="module" src="/@runtime.js"></script>
-
-  <script type="module" src="/@error-overlay.js"></script>
-
-  <script type="module" src="/@vite/client"></script>
-
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="icon" href="{{appAvatar}}">
-  <title>{{appName}}</title>
-  <script>
-    try {
+    document.head.appendChild(teaScript);</script><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="{{appAvatar}}"><title>{{appName}}</title><script>try {
       window.__platform__ = JSON.parse('{{{__platform__}}}');
     } catch (e) {
       console.error('Failed to parse __platform__', e);
-    }
-  </script>
-
-    <meta property="og:title" content="{{appName}}">
-  
-    <meta property="og:description" content="{{appDescription}}">
-  
-    <meta property="og:image" content="{{appAvatar}}">
-  
-    <meta property="og:url" content="{{currentUrl}}">
-  
-    <meta name="description" content="{{appDescription}}">
-  </head>
-
-<body>
-  <div id="root"></div>
-  <script type="module" src="/client/src/index.tsx"></script>
-</body>
-
-</html>
+    }</script><script type="module" crossorigin src="/assets/index-CRjTwlHD.js"></script><meta property="og:title" content="{{appName}}"><meta property="og:description" content="{{appDescription}}"><meta property="og:image" content="{{appAvatar}}"><meta property="og:url" content="{{currentUrl}}"><meta name="description" content="{{appDescription}}"></head><body><div id="root"></div></body></html>
