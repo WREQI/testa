@@ -130,6 +130,7 @@ export const tradingOrder = pgTable("trading_order", {
   stampTax: numeric("stamp_tax").notNull().default('0'),
   transferFee: numeric("transfer_fee").notNull().default('0'),
   status: varchar("status", { length: 20 }).notNull().default('filled'),
+  clientOrderId: varchar("client_order_id", { length: 100 }),
   // System field: Creation time (auto-filled, do not modify)
   createdAt: customTimestamptz("_created_at", { precision: 3 }).notNull().default(sql`CURRENT_TIMESTAMP`),
   // System field: Update time (auto-filled, do not modify)
@@ -137,6 +138,7 @@ export const tradingOrder = pgTable("trading_order", {
 }, (table) => [
   index("idx_trading_order_user_id").on(table.userId),
   index("idx_trading_order_created").on(table.userId, table.createdAt),
+  uniqueIndex("trading_order_user_client_order_key").on(table.userId, table.clientOrderId),
 ]);
 
 export const tradingPosition = pgTable("trading_position", {
@@ -197,7 +199,7 @@ export const appUsers = pgTable("app_users", {
   // System field: Update time (auto-filled, do not modify)
   updatedAt: customTimestamptz("_updated_at", { precision: 3 }).notNull().default(sql`CURRENT_TIMESTAMP`),
 }, (table) => [
-  // Complex index: CREATE UNIQUE INDEX app_users_email_key ON app_users USING btree (lower((email)::text)),
+  uniqueIndex("app_users_email_key").on(sql`lower(${table.email})`),
 ]);
 
 export const stockFinance = pgTable("stock_finance", {

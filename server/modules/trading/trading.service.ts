@@ -11,6 +11,7 @@ import {
   tradingPosition,
   tradingOrder,
   stockKline,
+  stockBasic,
 } from '@server/database/schema';
 import type {
   TradingAccount,
@@ -210,27 +211,40 @@ export class TradingService {
   }
 
   async trade(userId: string, req: TradeRequest): Promise<TradeResult> {
-    if (!req.stockCode || !req.stockName) {
-      throw new BadRequestException('股票代码和名称不能为空');
+    const stockCode = req.stockCode?.trim();
+    const direction = req.direction;
+    const quantity = req.quantity;
+
+    if (!stockCode || !/^[0-9A-Za-z.]{1,20}$/.test(stockCode)) {
+      throw new BadRequestException('股票代码无效');
     }
-    if (!req.price || req.price <= 0) {
-      throw new BadRequestException('价格无效');
+    if (direction !== 'buy' && direction !== 'sell') {
+      throw new BadRequestException('交易方向无效');
     }
-    if (!req.quantity || req.quantity <= 0 || req.quantity % 100 !== 0) {
+    if (!Number.isSafeInteger(quantity) || quantity <= 0 || quantity % 100 !== 0) {
       throw new BadRequestException('数量必须为100的整数倍');
     }
 
-    const amount = req.price * req.quantity;
-    const fees = calcFees(amount, req.direction);
+    const [stock] = await this.db
+      .select({ code: stockBasic.code, name: stockBasic.name })
+      .from(stockBasic)
+      .where(eq(stockBasic.code, stockCode))
+      .limit(1);
+    if (!stock) throw new BadRequestException('股票不存在或暂不可交易');
+
+    const quote = await this.getLatestQuote(stockCode);
+    if (!quote || !Number.isFinite(quote.close) || quote.close <= 0) {
+      throw new BadRequestException('暂无可用行情，无法交易');
+    }
+    const price = quote.close;
+    const amount = price * quantity;
+    const fees = calcFees(amount, direction);
     const totalCost = amount + fees.commission + fees.stampTax + fees.transferFee;
     const netProceeds = amount - fees.commission - fees.stampTax - fees.transferFee;
 
     return this.db.transaction(async (tx) => {
       const accountRows = await tx
-        .select({
-          id: tradingAccount.id,
-          availableCash: tradingAccount.availableCash,
-        })
+        .select({ id: tradingAccount.id, availableCash: tradingAccount.availableCash })
         .from(tradingAccount)
         .where(eq(tradingAccount.userId, sql`${userId}::uuid`))
         .limit(1)
@@ -238,127 +252,46 @@ export class TradingService {
 
       let account = accountRows[0];
       if (!account) {
-        const [created] = await tx
-          .insert(tradingAccount)
-          .values({
-            userId: sql`${userId}::uuid`,
-            totalAssets: String(INITIAL_CASH),
-            availableCash: String(INITIAL_CASH),
-          })
-          .returning({
-            id: tradingAccount.id,
-            availableCash: tradingAccount.availableCash,
-          });
-        account = created;
+        await tx.insert(tradingAccount).values({
+          userId: sql`${userId}::uuid`,
+          totalAssets: String(INITIAL_CASH),
+          availableCash: String(INITIAL_CASH),
+        }).onConflictDoNothing({ target: tradingAccount.userId });
+        [account] = await tx.select({ id: tradingAccount.id, availableCash: tradingAccount.availableCash })
+          .from(tradingAccount).where(eq(tradingAccount.userId, sql`${userId}::uuid`)).for('update');
+      }
+
+      if (req.clientOrderId) {
+        const [existing] = await tx.select({ id: tradingOrder.id }).from(tradingOrder)
+          .where(and(eq(tradingOrder.userId, sql`${userId}::uuid`), eq(tradingOrder.clientOrderId, req.clientOrderId)))
+          .limit(1);
+        if (existing) return { success: true, orderId: existing.id, message: '订单已处理' };
       }
 
       const availableCash = num(account.availableCash);
-
-      if (req.direction === 'buy') {
-        if (availableCash < totalCost) {
-          throw new BadRequestException('可用资金不足');
-        }
-        await tx
-          .update(tradingAccount)
-          .set({
-            availableCash: sql`${tradingAccount.availableCash}::numeric - ${totalCost}`,
-          })
+      if (direction === 'buy') {
+        if (availableCash < totalCost) throw new BadRequestException('可用资金不足');
+        await tx.update(tradingAccount).set({ availableCash: sql`${tradingAccount.availableCash}::numeric - ${totalCost}` })
           .where(eq(tradingAccount.userId, sql`${userId}::uuid`));
-
-        const posRows = await tx
-          .select({
-            id: tradingPosition.id,
-            quantity: tradingPosition.quantity,
-            avgCost: tradingPosition.avgCost,
-          })
-          .from(tradingPosition)
-          .where(
-            and(
-              eq(tradingPosition.userId, sql`${userId}::uuid`),
-              eq(tradingPosition.stockCode, req.stockCode),
-            ),
-          )
-          .limit(1)
-          .for('update');
-
-        if (posRows.length > 0) {
-          const pos = posRows[0];
-          const newQty = pos.quantity + req.quantity;
-          const totalCostBasis = num(pos.avgCost) * pos.quantity + amount;
-          const newAvgCost = totalCostBasis / newQty;
-          await tx
-            .update(tradingPosition)
-            .set({
-              quantity: newQty,
-              avgCost: String(Math.round(newAvgCost * 10000) / 10000),
-              stockName: req.stockName,
-            })
-            .where(eq(tradingPosition.id, pos.id));
+        const [pos] = await tx.select({ id: tradingPosition.id, quantity: tradingPosition.quantity, avgCost: tradingPosition.avgCost })
+          .from(tradingPosition).where(and(eq(tradingPosition.userId, sql`${userId}::uuid`), eq(tradingPosition.stockCode, stockCode))).for('update');
+        if (pos) {
+          const newQty = pos.quantity + quantity;
+          const avg = (num(pos.avgCost) * pos.quantity + amount) / newQty;
+          await tx.update(tradingPosition).set({ quantity: newQty, avgCost: String(Math.round(avg * 10000) / 10000), stockName: stock.name }).where(eq(tradingPosition.id, pos.id));
         } else {
-          await tx.insert(tradingPosition).values({
-            userId: sql`${userId}::uuid`,
-            stockCode: req.stockCode,
-            stockName: req.stockName,
-            quantity: req.quantity,
-            avgCost: String(req.price),
-          });
+          await tx.insert(tradingPosition).values({ userId: sql`${userId}::uuid`, stockCode, stockName: stock.name, quantity, avgCost: String(price) });
         }
       } else {
-        const posRows = await tx
-          .select({
-            id: tradingPosition.id,
-            quantity: tradingPosition.quantity,
-          })
-          .from(tradingPosition)
-          .where(
-            and(
-              eq(tradingPosition.userId, sql`${userId}::uuid`),
-              eq(tradingPosition.stockCode, req.stockCode),
-            ),
-          )
-          .limit(1)
-          .for('update');
-
-        if (posRows.length === 0 || posRows[0].quantity < req.quantity) {
-          throw new BadRequestException('持仓不足');
-        }
-
-        const pos = posRows[0];
-        const newQty = pos.quantity - req.quantity;
-        if (newQty === 0) {
-          await tx.delete(tradingPosition).where(eq(tradingPosition.id, pos.id));
-        } else {
-          await tx
-            .update(tradingPosition)
-            .set({ quantity: newQty })
-            .where(eq(tradingPosition.id, pos.id));
-        }
-
-        await tx
-          .update(tradingAccount)
-          .set({
-            availableCash: sql`${tradingAccount.availableCash}::numeric + ${netProceeds}`,
-          })
-          .where(eq(tradingAccount.userId, sql`${userId}::uuid`));
+        const [pos] = await tx.select({ id: tradingPosition.id, quantity: tradingPosition.quantity }).from(tradingPosition)
+          .where(and(eq(tradingPosition.userId, sql`${userId}::uuid`), eq(tradingPosition.stockCode, stockCode))).for('update');
+        if (!pos || pos.quantity < quantity) throw new BadRequestException('持仓不足');
+        if (pos.quantity === quantity) await tx.delete(tradingPosition).where(eq(tradingPosition.id, pos.id));
+        else await tx.update(tradingPosition).set({ quantity: pos.quantity - quantity }).where(eq(tradingPosition.id, pos.id));
+        await tx.update(tradingAccount).set({ availableCash: sql`${tradingAccount.availableCash}::numeric + ${netProceeds}` }).where(eq(tradingAccount.userId, sql`${userId}::uuid`));
       }
 
-      const [order] = await tx
-        .insert(tradingOrder)
-        .values({
-          userId: sql`${userId}::uuid`,
-          stockCode: req.stockCode,
-          stockName: req.stockName,
-          direction: req.direction,
-          price: String(req.price),
-          quantity: req.quantity,
-          amount: String(amount),
-          commission: String(fees.commission),
-          stampTax: String(fees.stampTax),
-          transferFee: String(fees.transferFee),
-          status: 'filled',
-        })
-        .returning({ id: tradingOrder.id });
-
+      const [order] = await tx.insert(tradingOrder).values({ userId: sql`${userId}::uuid`, stockCode, stockName: stock.name, direction, price: String(price), quantity, amount: String(amount), commission: String(fees.commission), stampTax: String(fees.stampTax), transferFee: String(fees.transferFee), clientOrderId: req.clientOrderId, status: 'filled' }).returning({ id: tradingOrder.id });
       return { success: true, orderId: order.id };
     });
   }

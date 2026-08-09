@@ -219,7 +219,7 @@ export class StockService {
     }
 
     const ordered = HOT_STOCKS.map((code) => items.find((i) => i.code === code))
-      .filter((v): v is HotStock => v !== undefined);
+      .filter((v) => v !== undefined) as HotStock[];
     const fallback = HOT_STOCKS.map((code) => {
       if (ordered.find((x) => x.code === code)) return null;
       const basic = STOCK_POOL_FALLBACK.find((s) => s.code === code);
@@ -231,7 +231,7 @@ export class StockService {
         pctChg: 0,
         change: 0,
       };
-    }).filter((v): v is HotStock => v !== null);
+    }).filter((v) => v !== null) as HotStock[];
 
     return { items: [...ordered, ...fallback].slice(0, HOT_STOCKS.length) };
   }

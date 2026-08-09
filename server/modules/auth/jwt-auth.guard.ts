@@ -10,7 +10,7 @@ import { AuthService } from './auth.service';
 export class JwtAuthGuard implements CanActivate {
   constructor(private readonly authService: AuthService) {}
 
-  canActivate(context: ExecutionContext): boolean {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const req = context.switchToHttp().getRequest();
     const authHeader: string | undefined = req.headers?.authorization;
 
@@ -22,6 +22,12 @@ export class JwtAuthGuard implements CanActivate {
     const userId = this.authService.verifyToken(token);
     if (!userId) {
       throw new UnauthorizedException('登录已过期，请重新登录');
+    }
+
+    try {
+      await this.authService.findById(userId);
+    } catch {
+      throw new UnauthorizedException('用户不存在或已失效，请重新登录');
     }
 
     req.userId = userId;
